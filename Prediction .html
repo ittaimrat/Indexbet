@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>IndexBet · Prediction Market</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IndexBet">
+<meta name="theme-color" content="#0a0e14">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='90' y='120' font-size='90' text-anchor='middle' fill='white' font-family='Arial'%3E%E2%97%88%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#111721; --panel2:#161d29; --line:#232c3b;
+    --txt:#e6edf6; --dim:#8a97ab; --dimmer:#5b6779;
+    --up:#22c55e; --down:#ef4444; --acc:#3b82f6; --acc2:#7c3aed;
+    --yes:#16a34a; --no:#dc2626; --gold:#f5b301;
+    --r:14px; --shadow:0 8px 30px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%,#152036 0,transparent 60%),var(--bg);
+    color:var(--txt);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;padding-bottom:90px;
+  }
+  a{color:inherit}
+  .wrap{max-width:820px;margin:0 auto;padding:0 16px}
+  header{
+    position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);
+    background:linear-gradient(180deg,rgba(10,14,20,.92),rgba(10,14,20,.72));
+    border-bottom:1px solid var(--line);
+  }
+  .hrow{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;max-width:820px;margin:0 auto;padding-top:calc(14px + env(safe-area-inset-top))}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.3px;font-size:19px}
+  .logo .dot{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-size:15px}
+  .bal{text-align:right}
+  .bal .lbl{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+  .bal .amt{font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+  .bal .amt.flash{animation:flash .6s ease}
+  @keyframes flash{0%{color:var(--gold)}100%{color:var(--txt)}}
+
+  h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:22px 4px 12px}
+
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+  .tick{padding:14px 16px;margin-bottom:14px}
+  .tickhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .tname{display:flex;align-items:baseline;gap:9px;min-width:0}
+  .sym{font-weight:800;font-size:17px;letter-spacing:-.2px}
+  .full{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .px{text-align:right;font-variant-numeric:tabular-nums}
+  .px .p{font-weight:800;font-size:17px}
+  .px .chg{font-size:12.5px;font-weight:700}
+  .up{color:var(--up)} .down{color:var(--down)}
+  .spark{width:100%;height:34px;margin:10px 0 4px;display:block}
+
+  .mkts{margin-top:8px;display:flex;flex-direction:column;gap:10px}
+  .mkt{background:#0d131d;border:1px solid var(--line);border-radius:11px;padding:11px 12px}
+  .q{font-size:13.5px;font-weight:600;margin-bottom:9px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .q .tag{font-size:10px;font-weight:700;color:var(--dimmer);border:1px solid var(--line);border-radius:6px;padding:2px 6px;white-space:nowrap}
+  .oc{display:flex;gap:8px}
+  .btn-o{flex:1;border:1px solid var(--line);background:#111826;border-radius:9px;padding:9px 8px;cursor:pointer;color:var(--txt);text-align:center;transition:.12s;display:flex;flex-direction:column;gap:2px}
+  .btn-o:hover{border-color:var(--dimmer)}
+  .btn-o .side{font-size:11px;font-weight:800;letter-spacing:.4px}
+  .btn-o .prob{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+  .btn-o.yes .side{color:var(--yes)} .btn-o.no .side{color:var(--no)}
+  .btn-o.yes:hover{background:rgba(22,163,74,.12);border-color:var(--yes)}
+  .btn-o.no:hover{background:rgba(220,38,38,.12);border-color:var(--no)}
+  .btn-o.win{outline:2px solid var(--gold)}
+
+  /* multi-outcome (ranges) */
+  .rng{display:flex;flex-direction:column;gap:6px}
+  .rrow{display:flex;align-items:center;gap:10px;cursor:pointer;border:1px solid var(--line);background:#111826;border-radius:8px;padding:8px 10px;transition:.12s}
+  .rrow:hover{border-color:var(--acc)}
+  .rrow .rl{flex:1;font-size:13px;font-weight:600}
+  .rrow .bar{flex:1.4;height:6px;border-radius:4px;background:#1b2434;overflow:hidden}
+  .rrow .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+  .rrow .rp{width:44px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:13px}
+
+  /* nav */
+  nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(12,17,25,.94);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1;background:none;border:none;color:var(--dim);padding:11px 4px 14px;font-size:11px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+  nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+  nav button.on{color:var(--acc)}
+  .page{display:none} .page.on{display:block;animation:fade .25s}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* portfolio */
+  .pos{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .pos:last-child{border-bottom:none}
+  .pos .l .t{font-weight:700;font-size:14px} .pos .l .s{font-size:12px;color:var(--dim);margin-top:2px}
+  .pos .r{text-align:right} .pos .r .v{font-weight:800;font-variant-numeric:tabular-nums} .pos .r .s{font-size:11.5px;color:var(--dim)}
+  .pill{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;margin-right:6px}
+  .pill.y{background:rgba(22,163,74,.18);color:#4ade80} .pill.n{background:rgba(220,38,38,.18);color:#f87171}
+  .empty{text-align:center;color:var(--dim);padding:36px 16px}
+  .empty .big{font-size:32px;margin-bottom:8px}
+
+  /* leaderboard */
+  .lb{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .lb:last-child{border-bottom:none}
+  .lb .rank{width:26px;text-align:center;font-weight:800;color:var(--dim)}
+  .lb.me{background:linear-gradient(90deg,rgba(59,130,246,.14),transparent)}
+  .lb .av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff}
+  .lb .nm{flex:1;font-weight:700;font-size:14px}
+  .lb .nm .you{font-size:10px;color:var(--acc);font-weight:800;margin-left:5px}
+  .lb .pl{font-weight:800;font-variant-numeric:tabular-nums}
+  .rank.g{color:var(--gold)}
+
+  .cta{display:block;width:100%;border:none;border-radius:12px;padding:14px;font-weight:800;font-size:15px;color:#fff;cursor:pointer;margin:16px 0 4px;background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 6px 18px rgba(59,130,246,.35)}
+  .cta.warn{background:linear-gradient(135deg,#e11d48,#7c2d12);box-shadow:0 6px 18px rgba(225,29,72,.3)}
+  .cta:active{transform:translateY(1px)}
+  .subtle{text-align:center;color:var(--dimmer);font-size:12px;margin:10px 0}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:2px 0 4px}
+  .kpi{background:#0d131d;border:1px solid var(--line);border-radius:11px;padding:12px;text-align:center}
+  .kpi .v{font-weight:800;font-size:19px;font-variant-numeric:tabular-nums} .kpi .l{font-size:11px;color:var(--dim);margin-top:3px}
+
+  /* modal */
+  .scrim{position:fixed;inset:0;background:rgba(4,7,12,.66);backdrop-filter:blur(3px);z-index:50;display:none;align-items:flex-end;justify-content:center}
+  .scrim.on{display:flex}
+  .sheet{width:100%;max-width:480px;background:var(--panel2);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:18px 18px 26px;animation:up .28s cubic-bezier(.2,.9,.3,1)}
+  @keyframes up{from{transform:translateY(100%)}to{transform:none}}
+  .sheet h3{margin:2px 0 2px;font-size:17px}
+  .sheet .sub{color:var(--dim);font-size:13px;margin-bottom:14px}
+  .odds-box{display:flex;justify-content:space-between;background:#0d131d;border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:14px;font-size:13px}
+  .odds-box b{font-size:15px}
+  .amtrow{display:flex;gap:8px;margin-bottom:10px}
+  .amtrow button{flex:1;background:#0d131d;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:10px;font-weight:700;cursor:pointer}
+  .amtrow button:hover{border-color:var(--acc)}
+  .stake{display:flex;align-items:center;gap:10px;background:#0d131d;border:1px solid var(--line);border-radius:11px;padding:6px 12px;margin-bottom:12px}
+  .stake span{color:var(--dim);font-weight:800}
+  .stake input{flex:1;background:none;border:none;color:var(--txt);font-size:22px;font-weight:800;outline:none;width:100%;font-variant-numeric:tabular-nums}
+  .payout{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:16px;color:var(--dim)}
+  .payout b{color:var(--gold);font-size:16px}
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:#0d131d;border:1px solid var(--line);border-radius:12px;padding:11px 16px;font-weight:700;z-index:60;box-shadow:var(--shadow);display:none;font-size:13.5px}
+  .toast.on{display:block;animation:fade .2s}
+  .toast.good{border-color:var(--yes)} .toast.bad{border-color:var(--no)}
+  .disc{font-size:11px;color:var(--dimmer);text-align:center;padding:18px 20px 6px;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div class="logo"><span class="dot">◈</span> IndexBet</div>
+    <div class="bal"><div class="lbl">Play balance</div><div class="amt" id="bal">$10,000</div></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- MARKETS -->
+  <section class="page on" id="p-markets">
+    <h2 class="sec">Index & ETF Markets · <span id="clock" style="color:var(--dim)"></span></h2>
+    <div id="tickers"></div>
+    <div class="disc">Play-money simulation for entertainment. Prices are simulated, not live market data. Not investment advice.</div>
+  </section>
+
+  <!-- PORTFOLIO -->
+  <section class="page" id="p-port">
+    <h2 class="sec">Your Portfolio</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="v" id="k-cash">$10k</div><div class="l">Cash</div></div>
+      <div class="kpi"><div class="v" id="k-open">$0</div><div class="l">In play</div></div>
+      <div class="kpi"><div class="v" id="k-pnl">$0</div><div class="l">Net P/L</div></div>
+    </div>
+    <div class="card" id="positions" style="margin-top:14px"></div>
+    <button class="cta warn" id="resolveBtn">⚡ Simulate market close & resolve</button>
+    <div class="subtle">Resolves all daily up/down markets against the simulated close and pays $1 per winning share.</div>
+    <div class="subtle" id="saveHint" style="margin-top:14px">Progress saves automatically on this device.</div>
+    <div class="subtle" style="margin-top:2px"><span id="resetBtn" style="color:var(--down);font-weight:700;cursor:pointer">↺ Reset game</span></div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="page" id="p-lb">
+    <h2 class="sec">Leaderboard · This session</h2>
+    <div class="card" id="leaderboard"></div>
+    <div class="subtle">Ranked by total play-money net worth.</div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- BET SHEET -->
+<div class="scrim" id="scrim">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<nav>
+  <button class="on" data-tab="markets"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>Markets</button>
+  <button data-tab="port"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg>Portfolio</button>
+  <button data-tab="lb"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/><path d="M17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3"/></svg>Leaders</button>
+</nav>
+
+<script>
+/* ---------- instruments ---------- */
+const INST = [
+  {sym:'SPX', name:'S&P 500 Index',     px:6318.40, dec:2, step:5.5},
+  {sym:'NDX', name:'Nasdaq-100 Index',  px:23140.7, dec:2, step:26},
+  {sym:'SPY', name:'SPDR S&P 500 ETF',  px:629.85,  dec:2, step:0.55},
+  {sym:'QQQ', name:'Invesco QQQ ETF',   px:563.20,  dec:2, step:0.6},
+  {sym:'RUT', name:'Russell 2000 Index',px:2298.6,  dec:2, step:3.4},
+  {sym:'XSP', name:'Mini-SPX Index',    px:631.84,  dec:2, step:0.55},
+];
+
+const fmt = (n,d=2)=>n.toLocaleString('en-US',{minimumFractionDigits:d,maxFractionDigits:d,maximumFractionDigits:d});
+const money = n=> (n<0?'-':'')+'$'+Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0});
+const money2 = n=> (n<0?'-':'')+'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const kmoney = n=> Math.abs(n)>=1000 ? '$'+(n/1000).toFixed(n%1000?1:0)+'k' : '$'+Math.round(n);
+
+/* ---------- state ---------- */
+let balance = 10000;
+const state = {}; // per instrument: {open, px, hist[], up:{p}, ranges:[{lbl,p}]}
+INST.forEach(i=>{
+  const hist = Array.from({length:40},(_,k)=>i.px - i.step*2 + Math.sin(k/4)*i.step*0.6);
+  hist[hist.length-1]=i.px;
+  const lvls = rangeLevels(i.px);
+  state[i.sym] = {
+    open:i.px, px:i.px, hist,
+    up:{ p: 0.5 + (Math.random()-0.5)*0.1 },
+    ranges: lvls
+  };
+});
+function rangeLevels(px){
+  // build 4 buckets around current price
+  const s = px*0.006;
+  const a = round(px - s*3), b = round(px - s), c = round(px + s), d = round(px + s*3);
+  const raw = [
+    {lbl:`Below ${grp(a)}`,           w:0.18},
+    {lbl:`${grp(a)} – ${grp(c)}`,     w:0.34},
+    {lbl:`${grp(c)} – ${grp(d)}`,     w:0.30},
+    {lbl:`Above ${grp(d)}`,           w:0.18},
+  ];
+  return norm(raw);
+}
+function round(x){ return x>1000? Math.round(x/5)*5 : Math.round(x*100)/100; }
+function grp(x){ return x.toLocaleString('en-US',{maximumFractionDigits:x>1000?0:2}); }
+function norm(arr){ const s=arr.reduce((t,o)=>t+o.w,0); arr.forEach(o=>o.p=o.w/s); return arr; }
+
+/* ---------- positions ---------- */
+let positions = []; // {id,sym,type,label,side,shares,cost,price,resolved,won}
+let pid = 1;
+
+/* ---------- bots ---------- */
+const BOTS = [
+  {nm:'QuantKai',   nw:10000, c:'#3b82f6'}, {nm:'VolWitch', nw:10000, c:'#a855f7'},
+  {nm:'ThetaGang',  nw:10000, c:'#ef4444'}, {nm:'MacroMia', nw:10000, c:'#22c55e'},
+  {nm:'GammaGus',   nw:10000, c:'#f5b301'}, {nm:'IndexIvy', nw:10000, c:'#06b6d4'},
+  {nm:'BasisBro',   nw:10000, c:'#ec4899'},
+];
+
+/* ---------- render tickers ---------- */
+function sparkPath(hist,w,h){
+  const mn=Math.min(...hist), mx=Math.max(...hist), rg=(mx-mn)||1;
+  return hist.map((v,i)=>{
+    const x=(i/(hist.length-1))*w;
+    const y=h-((v-mn)/rg)*(h-4)-2;
+    return (i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);
+  }).join(' ');
+}
+function renderTickers(){
+  const host = document.getElementById('tickers');
+  host.innerHTML = INST.map(i=>{
+    const s=state[i.sym];
+    const chg = s.px - s.open, pct = chg/s.open*100;
+    const cls = chg>=0?'up':'down';
+    const col = chg>=0?'var(--up)':'var(--down)';
+    const path = sparkPath(s.hist,300,34);
+    const upP = Math.round(s.up.p*100);
+    const rangesHtml = s.ranges.map((r,ri)=>`
+      <div class="rrow" onclick="openBet('${i.sym}','range',${ri})">
+        <div class="rl">${r.lbl}</div>
+        <div class="bar"><i style="width:${Math.round(r.p*100)}%"></i></div>
+        <div class="rp">${Math.round(r.p*100)}¢</div>
+      </div>`).join('');
+    return `
+    <div class="card tick">
+      <div class="tickhead">
+        <div class="tname"><span class="sym">${i.sym}</span><span class="full">${i.name}</span></div>
+        <div class="px"><div class="p">${fmt(s.px,i.dec)}</div>
+          <div class="chg ${cls}">${chg>=0?'▲':'▼'} ${fmt(Math.abs(chg),i.dec)} (${pct>=0?'+':''}${pct.toFixed(2)}%)</div></div>
+      </div>
+      <svg class="spark" viewBox="0 0 300 34" preserveAspectRatio="none">
+        <path d="${path}" stroke="${col}" fill="none" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+      <div class="mkts">
+        <div class="mkt">
+          <div class="q">Will ${i.sym} close higher today? <span class="tag">DAILY · BINARY</span></div>
+          <div class="oc">
+            <div class="btn-o yes" onclick="openBet('${i.sym}','up','yes')"><span class="side">YES ▲</span><span class="prob">${upP}¢</span></div>
+            <div class="btn-o no" onclick="openBet('${i.sym}','up','no')"><span class="side">NO ▼</span><span class="prob">${100-upP}¢</span></div>
+          </div>
+        </div>
+        <div class="mkt">
+          <div class="q">Where does ${i.sym} close? <span class="tag">DAILY · RANGE</span></div>
+          <div class="rng">${rangesHtml}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- price sim ---------- */
+function tick(){
+  INST.forEach(i=>{
+    const s=state[i.sym];
+    const drift=(Math.random()-0.5)*i.step;
+    s.px = Math.max(0.01, s.px + drift);
+    s.hist.push(s.px); if(s.hist.length>40) s.hist.shift();
+    // nudge implied prob toward realized move + noise
+    const bias = Math.tanh((s.px-s.open)/(i.step*6))*0.5+0.5;
+    s.up.p += (bias - s.up.p)*0.06 + (Math.random()-0.5)*0.015;
+    s.up.p = Math.min(0.97,Math.max(0.03,s.up.p));
+    // drift ranges a touch
+    s.ranges.forEach(r=> r.p = Math.max(0.03, r.p + (Math.random()-0.5)*0.01));
+    norm(s.ranges);
+  });
+  // bots drift net worth
+  BOTS.forEach(b=> b.nw = Math.max(0, b.nw + (Math.random()-0.48)*140));
+  if(document.getElementById('p-markets').classList.contains('on')) renderTickers();
+  if(document.getElementById('p-lb').classList.contains('on')) renderLeaderboard();
+  document.getElementById('clock').textContent = 'live · '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  save();
+}
+
+/* ---------- betting sheet ---------- */
+let betCtx=null;
+function openBet(sym,type,key){
+  const s=state[sym]; let label, price, side='';
+  if(type==='up'){ side=key; price = key==='yes'? s.up.p : 1-s.up.p; label = key==='yes'?`${sym} closes UP`:`${sym} closes DOWN`; }
+  else { const r=s.ranges[key]; price=r.p; label=`${sym} · ${r.lbl}`; side='yes'; }
+  betCtx={sym,type,key,label,price};
+  const cents=Math.round(price*100);
+  document.getElementById('sheet').innerHTML=`
+    <h3>${label}</h3>
+    <div class="sub">Daily market · resolves at simulated close · $1.00 per winning share</div>
+    <div class="odds-box"><span>Price per share<br><b>${cents}¢</b></span>
+      <span style="text-align:right">Implied odds<br><b>${cents}%</b></span></div>
+    <div class="amtrow">
+      ${[25,100,250,'MAX'].map(a=>`<button onclick="setStake('${a}')">${a==='MAX'?'MAX':'$'+a}</button>`).join('')}
+    </div>
+    <div class="stake"><span>$</span><input id="stake" type="number" inputmode="numeric" value="100" oninput="calcPay()"></div>
+    <div class="payout"><span>Shares <b id="sh" style="color:var(--txt)">0</b> · to win</span><b id="win">$0</b></div>
+    <button class="cta" onclick="placeBet()">Buy shares</button>
+    <div class="subtle" style="margin-bottom:0" onclick="closeSheet()">Cancel</div>`;
+  document.getElementById('scrim').classList.add('on');
+  calcPay();
+}
+function setStake(a){
+  const el=document.getElementById('stake');
+  el.value = a==='MAX'? Math.floor(balance) : a;
+  calcPay();
+}
+function calcPay(){
+  const stake=Math.max(0,+document.getElementById('stake').value||0);
+  const shares=stake/betCtx.price;
+  document.getElementById('sh').textContent=shares.toFixed(1);
+  document.getElementById('win').textContent=money2(shares); // $1 each
+}
+function placeBet(){
+  const stake=Math.max(0,Math.round(+document.getElementById('stake').value||0));
+  if(stake<=0) return toast('Enter a stake','bad');
+  if(stake>balance) return toast('Not enough play balance','bad');
+  const shares=stake/betCtx.price;
+  balance-=stake;
+  positions.push({id:pid++,sym:betCtx.sym,type:betCtx.type,key:betCtx.key,
+    label:betCtx.label,side:betCtx.side,shares,cost:stake,price:betCtx.price,resolved:false});
+  // buying moves the market
+  const s=state[betCtx.sym];
+  const impact=Math.min(0.08, stake/12000);
+  if(betCtx.type==='up'){ if(betCtx.key==='yes') s.up.p=Math.min(0.97,s.up.p+impact); else s.up.p=Math.max(0.03,s.up.p-impact);}
+  else { s.ranges[betCtx.key].p=Math.min(0.95,s.ranges[betCtx.key].p+impact); norm(s.ranges);}
+  closeSheet(); updateBal(true); renderTickers(); renderPort(); save();
+  toast(`Bought ${shares.toFixed(1)} shares · ${betCtx.label}`,'good');
+}
+function closeSheet(){ document.getElementById('scrim').classList.remove('on'); }
+document.getElementById('scrim').addEventListener('click',e=>{ if(e.target.id==='scrim') closeSheet(); });
+
+/* ---------- portfolio ---------- */
+function updateBal(flash){
+  const el=document.getElementById('bal'); el.textContent=money2(balance);
+  if(flash){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+}
+function renderPort(){
+  const open = positions.filter(p=>!p.resolved);
+  const inPlay = open.reduce((t,p)=>t+p.cost,0);
+  const settled = positions.filter(p=>p.resolved);
+  const pnl = balance + inPlayValue() - 10000;
+  document.getElementById('k-cash').textContent=kmoney(balance);
+  document.getElementById('k-open').textContent=kmoney(inPlay);
+  const pn=document.getElementById('k-pnl'); pn.textContent=(pnl>=0?'+':'')+kmoney(pnl);
+  pn.style.color = pnl>=0?'var(--up)':'var(--down)';
+
+  const host=document.getElementById('positions');
+  if(!positions.length){ host.innerHTML=`<div class="empty"><div class="big">🎯</div>No positions yet.<br>Tap a market to place your first prediction.</div>`; return; }
+  const row=p=>{
+    const pillCls = p.side==='yes'?'y':'n';
+    const pillTxt = p.type==='up' ? (p.key==='yes'?'YES':'NO') : 'YES';
+    let right;
+    if(!p.resolved){ right=`<div class="v">${money2(p.shares)}</div><div class="s">if it hits · cost ${money2(p.cost)}</div>`; }
+    else { right=`<div class="v ${p.won?'up':'down'}">${p.won?'+'+money2(p.shares-p.cost):'-'+money2(p.cost)}</div><div class="s">${p.won?'WON':'LOST'}</div>`; }
+    return `<div class="pos"><div class="l"><div class="t"><span class="pill ${pillCls}">${pillTxt}</span>${p.label}</div>
+      <div class="s">${p.shares.toFixed(1)} shares @ ${Math.round(p.price*100)}¢</div></div>
+      <div class="r">${right}</div></div>`;
+  };
+  host.innerHTML = open.map(row).join('') + settled.slice().reverse().map(row).join('');
+}
+function inPlayValue(){ // mark open positions at current implied price
+  return positions.filter(p=>!p.resolved).reduce((t,p)=>{
+    const s=state[p.sym]; let cur;
+    if(p.type==='up') cur = p.key==='yes'? s.up.p : 1-s.up.p;
+    else cur = s.ranges[p.key].p;
+    return t + p.shares*cur;
+  },0);
+}
+
+/* ---------- resolve ---------- */
+document.getElementById('resolveBtn').addEventListener('click',resolveAll);
+document.getElementById('resetBtn').addEventListener('click',resetGame);
+function resolveAll(){
+  const open = positions.filter(p=>!p.resolved);
+  if(!open.length) return toast('No open positions to resolve','bad');
+  let payout=0, wins=0;
+  open.forEach(p=>{
+    const s=state[p.sym]; let won=false;
+    if(p.type==='up'){ const wentUp = s.px>=s.open; won = (p.key==='yes')===wentUp; }
+    else {
+      // determine which range the close landed in
+      const idx = whichRange(s.sym||p.sym, s.px);
+      won = idx===p.key;
+    }
+    p.resolved=true; p.won=won;
+    if(won){ payout+=p.shares; wins++; }
+  });
+  balance+=payout;
+  // reset each instrument's session open to current px for a fresh "day"
+  INST.forEach(i=>{ state[i.sym].open=state[i.sym].px; state[i.sym].ranges=rangeLevels(state[i.sym].px); });
+  updateBal(true); renderPort(); renderTickers(); save();
+  toast(`Resolved ${open.length} · ${wins} won · +${money2(payout)}`, payout>0?'good':'bad');
+}
+function whichRange(sym,px){
+  // recompute bucket edges from the *open* levels stored; approximate by comparing to stored labels
+  const s=state[sym]; // ranges were built around old open; use numeric edges
+  // rebuild edges from open reference
+  const ref=s.open, step=ref*0.006;
+  const a=round(ref-step*3), d=round(ref+step*3), c=round(ref+step);
+  if(px<a) return 0; if(px< c) return 1; if(px< d) return 2; return 3;
+}
+
+/* ---------- leaderboard ---------- */
+function renderLeaderboard(){
+  const meNw = balance + inPlayValue();
+  const rows = BOTS.map(b=>({nm:b.nm,nw:b.nw,c:b.c,me:false}))
+    .concat([{nm:'You',nw:meNw,c:'linear-gradient(135deg,#3b82f6,#7c3aed)',me:true}])
+    .sort((a,b)=>b.nw-a.nw);
+  const host=document.getElementById('leaderboard');
+  host.innerHTML=rows.map((r,i)=>{
+    const pl=r.nw-10000;
+    return `<div class="lb ${r.me?'me':''}">
+      <div class="rank ${i<3?'g':''}">${i+1}</div>
+      <div class="av" style="background:${r.c}">${r.nm==='You'?'★':r.nm[0]}</div>
+      <div class="nm">${r.nm}${r.me?'<span class="you">YOU</span>':''}</div>
+      <div class="pl ${pl>=0?'up':'down'}">${pl>=0?'+':''}${money(pl)}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg,kind){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast on '+(kind||'');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('on'),2200);
+}
+
+/* ---------- nav ---------- */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    const t=b.dataset.tab;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+    document.getElementById(t==='markets'?'p-markets':t==='port'?'p-port':'p-lb').classList.add('on');
+    if(t==='port') renderPort(); if(t==='lb') renderLeaderboard();
+  });
+});
+
+/* ---------- persistence ---------- */
+const SKEY='indexbet.save.v1';
+let canStore=true;
+function save(){
+  if(!canStore) return;
+  try{
+    const snap={balance,pid,positions,
+      bots:BOTS.map(b=>({nw:b.nw})),
+      insts:{}};
+    INST.forEach(i=>{const s=state[i.sym];snap.insts[i.sym]={open:s.open,px:s.px,hist:s.hist,upProb:s.up.p,ranges:s.ranges};});
+    localStorage.setItem(SKEY,JSON.stringify(snap));
+  }catch(e){ canStore=false; }
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(SKEY); if(!raw) return false;
+    const snap=JSON.parse(raw);
+    if(typeof snap.balance==='number') balance=snap.balance;
+    if(typeof snap.pid==='number') pid=snap.pid;
+    if(Array.isArray(snap.positions)) positions=snap.positions;
+    if(Array.isArray(snap.bots)) snap.bots.forEach((b,i)=>{ if(BOTS[i]&&typeof b.nw==='number') BOTS[i].nw=b.nw; });
+    if(snap.insts) INST.forEach(i=>{
+      const d=snap.insts[i.sym]; if(!d) return; const s=state[i.sym];
+      if(typeof d.open==='number') s.open=d.open;
+      if(typeof d.px==='number') s.px=d.px;
+      if(Array.isArray(d.hist)&&d.hist.length) s.hist=d.hist;
+      if(typeof d.upProb==='number') s.up.p=d.upProb;
+      if(Array.isArray(d.ranges)&&d.ranges.length) s.ranges=d.ranges;
+    });
+    return true;
+  }catch(e){ canStore=false; return false; }
+}
+function resetGame(){
+  if(!confirm('Reset the game? This clears your balance, positions and leaderboard back to the start.')) return;
+  try{ localStorage.removeItem(SKEY); }catch(e){}
+  balance=10000; positions=[]; pid=1;
+  BOTS.forEach(b=>b.nw=10000);
+  INST.forEach(i=>{
+    const s=state[i.sym];
+    s.open=i.px; s.px=i.px; s.up.p=0.5+(Math.random()-0.5)*0.1;
+    s.ranges=rangeLevels(i.px);
+    s.hist=Array.from({length:40},(_,k)=>i.px-i.step*2+Math.sin(k/4)*i.step*0.6);
+    s.hist[s.hist.length-1]=i.px;
+  });
+  save(); updateBal(true); renderTickers(); renderPort(); renderLeaderboard();
+  toast('Game reset · balance back to $10,000','good');
+}
+
+/* ---------- boot ---------- */
+const restored = load();
+renderTickers(); updateBal(); renderPort();
+setInterval(tick,1400);
+document.getElementById('clock').textContent='live';
+document.getElementById('saveHint').textContent = canStore
+  ? 'Progress saves automatically on this device.'
+  : 'Add to Home Screen to save progress between sessions.';
+if(restored) setTimeout(()=>toast('Welcome back — progress restored','good'),300);
+</script>
+</body>
+</html>
